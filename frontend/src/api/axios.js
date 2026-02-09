@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:5000",
+  baseURL: "https://task-manager-fullstack-node.onrender.com/",
   withCredentials: true,
 });
 
@@ -53,7 +53,7 @@ api.interceptors.response.use(
 
       try {
         const res = await axios.post(
-          "http://localhost:5000/refresh-token",
+          "https://task-manager-fullstack-node.onrender.com/refresh-token",
           {},
           { withCredentials: true },
         );

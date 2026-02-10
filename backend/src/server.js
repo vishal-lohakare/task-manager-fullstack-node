@@ -93,8 +93,8 @@ app.post("/login", async (req, res) => {
   // ✅ Store refresh token in cookie
   res.cookie("refreshToken", refreshToken, {
     httpOnly: true,
-    secure: false, // true in production
-    sameSite: "strict",
+    secure: true,
+    sameSite: "none",
   });
 
   res.json({ accessToken });

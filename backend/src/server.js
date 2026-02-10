@@ -10,15 +10,19 @@ const prisma = require("./prisma");
 const app = express();
 
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://task-manager-fullstack-node-jj25x4pmd-vishals-projects-2ba31bcb.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://task-manager-fullstack-node.onrender.com/",
-    ],
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
+
 app.use(express.json());
 
 app.get("/", (req, res) => {

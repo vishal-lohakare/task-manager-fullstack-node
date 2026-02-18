@@ -94,15 +94,21 @@ app.post("/login", async (req, res) => {
 
   // ✅ Access Token (short life)
   const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: "20s",
   });
 
   // ✅ Refresh Token (long life)
   const refreshToken = jwt.sign(
-    { userId: user.id },
+    { id: user.id },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "1d" },
+    { expiresIn: "2m" },
   );
+
+  // 🔥 STORE IN DB
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { refreshToken },
+  });
 
   // ✅ Store refresh token in cookie
   res.cookie("refreshToken", refreshToken, {
@@ -114,26 +120,33 @@ app.post("/login", async (req, res) => {
   res.json({ accessToken });
 });
 
-app.post("/refresh-token", (req, res) => {
+app.post("/refresh-token", async (req, res) => {
   const token = req.cookies.refreshToken;
 
-  if (!token) {
-    return res.status(401).json({ error: "No refresh token" });
-  }
+  if (!token) return res.status(401).json({ message: "No token" });
 
+  let decoded;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
-
-    const accessToken = jwt.sign(
-      { userId: decoded.userId },
-      process.env.JWT_SECRET,
-      { expiresIn: "15m" },
-    );
-
-    res.json({ accessToken });
-  } catch (err) {
-    return res.status(403).json({ error: "Invalid refresh token" });
+    decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+  } catch {
+    return res.status(403).json({ message: "Invalid token" });
   }
+
+  // 🔥 NEW: CHECK DB
+  const user = await prisma.user.findUnique({
+    where: { id: decoded.id },
+  });
+
+  if (!user || user.refreshToken !== token) {
+    return res.status(403).json({ message: "Token mismatch" });
+  }
+
+  // Issue new access token
+  const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    expiresIn: "20s",
+  });
+
+  res.json({ accessToken });
 });
 
 app.post("/tasks", authMiddleware, async (req, res) => {
@@ -207,4 +220,25 @@ app.delete("/tasks/:id", authMiddleware, async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Task delete failed" });
   }
+});
+
+app.post("/logout", async (req, res) => {
+  const token = req.cookies.refreshToken;
+
+  if (token) {
+    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+
+    await prisma.user.update({
+      where: { id: decoded.id },
+      data: { refreshToken: null },
+    });
+  }
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
+  res.json({ message: "Logged out" });
 });

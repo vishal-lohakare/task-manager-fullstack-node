@@ -25,9 +25,15 @@ export default function Dashboard() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/login");
+  const handleLogout = async () => {
+    try {
+      await api.post("/logout");
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      localStorage.removeItem("token");
+      navigate("/login");
+    }
   };
 
   const initials = (email = "") => {

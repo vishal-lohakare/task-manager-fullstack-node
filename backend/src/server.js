@@ -94,14 +94,14 @@ app.post("/login", async (req, res) => {
 
   // ✅ Access Token (short life)
   const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-    expiresIn: "20s",
+    expiresIn: "1m",
   });
 
   // ✅ Refresh Token (long life)
   const refreshToken = jwt.sign(
     { id: user.id },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: "2m" },
+    { expiresIn: "1d" },
   );
 
   // 🔥 STORE IN DB
@@ -143,7 +143,7 @@ app.post("/refresh-token", async (req, res) => {
 
   // Issue new access token
   const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-    expiresIn: "20s",
+    expiresIn: "1m",
   });
 
   res.json({ accessToken });

@@ -93,7 +93,7 @@ app.post("/login", async (req, res) => {
   }
 
   // ✅ Access Token (short life)
-  const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+  const accessToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
     expiresIn: "1m",
   });
 
